@@ -1,0 +1,32 @@
+# Используем базовый образ Node.js
+FROM node:18 AS build
+
+# Устанавливаем рабочую директорию внутри контейнера
+WORKDIR /app
+
+# Копируем package.json и package-lock.json
+COPY Web/package*.json ./
+
+# Устанавливаем зависимости
+RUN npm install
+
+# Копируем все файлы проекта в контейнер
+COPY Web/. .
+
+# Сборка приложения
+RUN npm run build
+
+# Создаем образ для запуска приложения
+FROM nginx:stable
+
+# Копируем собранное приложение в Nginx
+COPY --from=build /app/dist /usr/share/nginx/html
+
+# Копируем кастомный конфиг Nginx, если нужно
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# Открываем порт
+EXPOSE 80
+
+# Старт сервера
+CMD ["nginx", "-g", "daemon off;"]

@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # Сервис для .NET приложения (бэкенд)
+  dotnet-app:
+    build:
+      context: .
+      dockerfile: Dockerfile-back
+    ports:
+      - "5000:8080"  # Приложение будет слушать на порту 8080 внутри контейнера, но не будет доступно извне
+    depends_on:
+      - postgres
+    networks:
+      - app-network
+
+  # Сервис для Node.js приложения (фронтенд)
+  node-app:
+    build:
+      context: .
+      dockerfile: Dockerfile-front
+    ports:
+      - "80:80"  # Приложение будет слушать на порту 80 внутри контейнера, но не будет доступно извне
+    networks:
+      - app-network
+
+  # Сервис для PostgreSQL
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 12345678
+      POSTGRES_DB: versta_db
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql # Запуск начальной базы данных
+    ports:
+      - "6432:5432"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+# Тома для хранения данных PostgreSQL
+volumes:
+  postgres-data:
